@@ -59,6 +59,44 @@ Todas las dependencias están listadas en `requirements.txt`:
 
 ## Instalación
 
+### Linux
+
+1. Verificar que hay un Python 3.11+ disponible:
+
+   ```bash
+   python3 --version
+   ```
+
+2. Si falta el módulo `venv` o `pip`, instalarlos con el gestor de paquetes de la
+   distribución:
+
+   ```bash
+   # Debian / Ubuntu
+   sudo apt update && sudo apt install python3-venv python3-pip
+
+   # Fedora
+   sudo dnf install python3-virtualenv python3-pip
+
+   # Arch / Manjaro
+   sudo pacman -S python-pip
+   ```
+
+3. Crear el entorno virtual, activarlo e instalar las dependencias:
+
+   ```bash
+   python3 -m venv quantathon_env
+   source quantathon_env/bin/activate
+   pip install -r requirements.txt
+   ```
+
+   Todas las dependencias (incluyendo `guppylang` y `selene-sim`) se instalan desde ruedas
+   (`.whl`) precompiladas para Linux `manylinux` — no se requiere un compilador de C/C++ ni
+   paquetes `-dev` adicionales.
+
+4. Para desactivar el entorno cuando se termine de trabajar: `deactivate`.
+
+### macOS / Windows
+
 ```bash
 python3 -m venv quantathon_env
 source quantathon_env/bin/activate        # Windows: quantathon_env\Scripts\activate
