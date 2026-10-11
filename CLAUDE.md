@@ -19,9 +19,11 @@ for the second:
   model on a 4×2 ladder** (8 sites, 16 qubits after Jordan-Wigner), following the same
   ED-vs-Trotter-vs-VQE structure but with a different toolchain: **Qiskit** for circuit
   primitives/simulation/VQE instead of guppylang/Selene. **Sections A (ED baseline), B
-  (Trotterized evolution), and C (Trotter error analysis) are implemented** — Section D (VQE)
-  and Limitations, described in the theory doc below, are not yet written. `requirements.txt`
-  includes `qiskit`/`qiskit-aer`.
+  (Trotterized evolution), C (Trotter error analysis), and D (VQE) are implemented** —
+  Limitations, described in the theory doc below, is not yet written. `requirements.txt`
+  includes `qiskit`/`qiskit-aer`. **Section D runs on a smaller 3×2 ladder (6 sites, 12
+  qubits), not Sections A–C's 4×2/16-qubit system** — see the Notebook architecture section
+  below for why.
 - **`fermi_hubbard_theory.md`** — hand-derived theory for the Fermi-Hubbard notebook: lattice
   Hamiltonian, Jordan-Wigner mapping (with the per-bond Z-string costs specific to this 2D
   ladder), Trotter layer structure, and what each planned notebook section should build. Read
@@ -120,9 +122,9 @@ Running `TFIM_ED_Trotter_VQE_merged.ipynb` regenerates the figures in the repo r
 `tfim_phase_diagram.png`, `tfim_quench_h{0.5,1.0,2.0}_trotter_vs_exact.png`,
 `trotter_error_convergence.png`, `tfim_vqe_vs_ed_N6.png`.
 
-Running `FermiHubbard2D_ED_Trotter_VQE.ipynb` (Sections A–C) regenerates
+Running `FermiHubbard2D_ED_Trotter_VQE.ipynb` (Sections A–D) regenerates
 `fermi_hubbard_2d_phase_diagram.png`, `fermi_hubbard_quench_U{1.0,4.0,8.0}_trotter_vs_exact.png`,
-and `fermi_hubbard_trotter_error_convergence.png`.
+`fermi_hubbard_trotter_error_convergence.png`, and `fermi_hubbard_vqe_vs_ed_3x2.png`.
 
 **Expected runtime is dominated by circuit simulation, not ED**, for the TFIM notebook. Section
 A (ED, N=6) runs in seconds. Sections B/C/D compile and run real circuits on Selene (2000
@@ -151,6 +153,14 @@ Section C (`N_STEPS_SCAN = [5, 10, 20, 40, 80, 160]` at `U_FOR_ERROR_SCAN=4.0`, 
 shot-free statevector evaluation) took ~40s when last run, dominated by the `n_steps=160`
 point (circuit depth scales with `n_steps`, and `Statevector.from_instruction` cost scales
 with that depth). For a quick smoke test, drop the largest `n_steps` values.
+
+Section D (VQE, 12 qubits — see Notebook architecture below for why it's smaller than A–C)
+took ~5 min total when last run: `~75s` per `U/t` value × 4 values
+(`U_VQE_SWEEP_VALUES = [0.0, 2.0, 4.0, 8.0]`), each running 3 COBYLA restarts of
+`maxiter=600` at `N_LAYERS_VQE=2` (48 parameters). Much faster than TFIM's VQE section
+despite COBYLA restarts, because each circuit evaluation is only ~0.04s at 12 qubits (vs.
+Selene's per-shot-batch overhead). For a quick smoke test, lower `n_restarts`/`maxiter` in
+`run_vqe` or shorten `U_VQE_SWEEP_VALUES`.
 
 There is **no test suite, linter, or CI** in this repo — the deliverables are the notebooks, the
 figures they emit, and the documents in `Informe_tecnico/`. "Verifying a change" means re-running
@@ -196,10 +206,10 @@ direct comparability. The Section B Trotter step `Δt = T_MAX / N_STEPS` is reus
 sweep) in Section C's error analysis — don't let these drift independently. VQE uses `seed=0`;
 results are not guaranteed globally optimal (COBYLA is local).
 
-### `FermiHubbard2D_ED_Trotter_VQE.ipynb` (in progress)
+### `FermiHubbard2D_ED_Trotter_VQE.ipynb` (Limitations section pending)
 
 Mirrors the TFIM notebook's section structure (see `fermi_hubbard_theory.md` §3 for the full
-plan); Sections A, B, and C are implemented, D/Limitations are not:
+plan); Sections A, B, C, and D are implemented, Limitations is not:
 
 - **Section A — Exact diagonalization (classical baseline)**, implemented: `basis_states`
   (Fock basis for a fixed `(N_↑, N_↓)` particle-number sector), `build_fermi_hubbard_operators`
@@ -273,10 +283,46 @@ plan); Sections A, B, and C are implemented, D/Limitations are not:
     out rather than shipped unexplained. Picking this up again means budgeting time to either
     find the construction's actual bug or characterize the crossover `Δt` properly, not just
     reusing the prototype.
-- **Section D — VQE, not yet implemented**: planned ansatz should conserve particle number and
-  ideally total spin (a hopping-gate/Givens-rotation ansatz built from the same JW mapping, per
-  theory doc §3) rather than a generic hardware-efficient ansatz, which would explore unphysical
-  number/spin sectors.
+- **Section D — VQE**, implemented: a **Hamiltonian Variational Ansatz (HVA)** — the same
+  hopping (`XX_str+YY_str`) and interaction (`ZZ`) gate primitives as Section B/C's Trotter
+  circuit, but each gate's angle is an independent free parameter instead of a physically-fixed
+  Trotter angle, applied to the same CDW reference state — rather than a generic
+  hardware-efficient ansatz (matching theory doc §3's ask). This conserves `N_↑`/`N_↓` exactly
+  for *any* parameter values (hopping gates conserve particle number per spin; the interaction
+  gate is diagonal), hence also `Sz` exactly (not necessarily `S²`).
+  - **Runs on a reduced 3×2 ladder (6 sites, 12 qubits), not Sections A–C's 4×2/16-qubit
+    system — a deliberate, empirically-forced choice, not a shortcut taken lightly.** At the
+    full 4×2 size, with one shared angle per Trotter-style layer (7 params/layer) and COBYLA
+    (matching TFIM's Section D optimizer), VQE did not converge even at the easy `U=0`
+    free-fermion sanity check (1–6 layers, 150–300 iterations: best found was −5.28 vs. the
+    exact −12.00). A gradient-based optimizer (justified since evaluation is exact/noiseless)
+    helped only marginally and cost 2×(#params) evaluations per step — one run took 24 minutes
+    and still didn't close the gap. This was verified as a genuine cost/convergence trade-off,
+    not a bug, by hand-checking the Hamiltonian/circuit on the bare (unrotated) reference
+    state's energy before concluding the ansatz/optimizer combination was the bottleneck.
+    Dropping to 3×2 (12 qubits, ~0.04s/circuit vs. ~0.3–0.7s) made **one free angle per bond**
+    (more expressive than per-layer sharing: `N_PARAMS_PER_LAYER_VQE = 2·len(BONDS_VQE)+L_VQE`)
+    and **multiple COBYLA random restarts per `U/t`** (`run_vqe`'s `n_restarts`, keeping the
+    best) affordable, which empirically closes *most* (not all) of the gap. Sections A–C's
+    numbers are **not directly comparable** to Section D's — D builds its own small ED
+    reference (`HOP_VQE`/`NINT_VQE`/.../`BASIS_VQE`, cell D.1) by reusing Section A's
+    generic, pure ED functions (`basis_states`, `fock_basis`, `build_fermi_hubbard_operators`,
+    `fermi_hubbard_hamiltonian`, `ground_state`, `double_occupancy` — all parametrized by
+    `(L, bonds, n_up, n_down)`, not closed over Section A's global `L=8`/`BONDS`) with the
+    smaller lattice's own arguments.
+  - **New `_vqe`-suffixed circuit primitives, not Section B/C's `append_hop_gate`/
+    `append_interaction_gate`/`NQ`/`L`.** Those close over the global `NQ=16`/`L=8`; Section D
+    needs `NQ_VQE=12`/`L_VQE=6`, so it defines `append_hop_gate_vqe`/`append_interaction_gate_vqe`
+    taking `nq`/`l` explicitly instead of redefining the global names (avoids silently changing
+    Section B/C's already-executed behavior if cells are re-run out of order).
+    `jw_hop_pauli_terms` itself has no such dependency (pure function of `p, q`) and is reused
+    as-is.
+  - **Reported honestly, not polished to look converged**: VQE gets the right qualitative trend
+    (energy ↓, double occupancy ↓ with `U/t`) but with a persistent gap — energy off by roughly
+    4–12%, double occupancy off by more and not even consistently signed (overestimates at
+    `U/t=2`, overshoots downward at `U/t=4,8`). The notebook's own closing markdown states the
+    exact numbers from the last run and the legitimate next steps (parameter-shift gradients,
+    more restarts) that weren't pursued, in the interest of bounded runtime.
 - **Limitations**, not yet written: should carry over the TFIM notebook's caveats plus the
   ladder-specific ones from the theory doc — this is a crossover study (no finite-`U_c`
   transition, §1.3), and 2D-vs-1D JW mapping adds Z-strings/CNOT overhead not present in TFIM.
