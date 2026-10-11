@@ -1,8 +1,10 @@
 # The Fermi-Hubbard Model: Theory and Fermion-to-Qubit Mapping
 
 This document lays the theoretical groundwork for a new, separate notebook analyzing the
-quantum phase transition and quench dynamics of the **2D Fermi-Hubbard model on a 4×2 lattice**,
-following the same ED-vs-Trotter-vs-VQE structure used for the TFIM in
+quantum phase transition and quench dynamics of the **2D Fermi-Hubbard model on a 3×2 lattice**
+(originally planned at 4×2; reduced to 3×2 once Section D's VQE forced the issue — see
+`CLAUDE.md` and the notebook's own intro/Section D for the empirical account), following the
+same ED-vs-Trotter-vs-VQE structure used for the TFIM in
 `TFIM_ED_Trotter_VQE_merged.ipynb`, but with a different toolchain: the Hamiltonian, the
 fermion-to-qubit mapping, and the Trotter decomposition are **hand-derived** (as they were for
 TFIM/guppylang), while **Qiskit** supplies the circuit primitives, simulator execution, and the
@@ -33,27 +35,36 @@ H = -t * Σ_{⟨i,j⟩,σ} (c†_{i,σ} c_{j,σ} + c†_{j,σ} c_{i,σ})
 This is dimension-agnostic — a 1D chain is the special case where `⟨i,j⟩` is a path (or ring,
 with PBC); the 2D case below just uses a richer bond set.
 
-### 1.2 This project's lattice: a 4×2 Hubbard ladder
+### 1.2 This project's lattice: a 3×2 Hubbard ladder
 
-Sites are indexed `(x, y)` with `x = 0..3` (**periodic**, the "leg"/ring direction) and
+Sites are indexed `(x, y)` with `x = 0..2` (**periodic**, the "leg"/ring direction) and
 `y = 0, 1` (**open**, the "rung" direction — 2 sites can't support a genuine second periodic
 bond without doubling up on the same pair, so this direction stays open). This is the standard
-**2-leg Hubbard ladder with periodic legs**, 8 sites total:
+**2-leg Hubbard ladder with periodic legs**, 6 sites total:
 
 ```
-(0,0)-(1,0)-(2,0)-(3,0)-(0,0)   [leg y=0, ring of 4]
-  |     |     |     |
-(0,1)-(1,1)-(2,1)-(3,1)-(0,1)   [leg y=1, ring of 4]
+(0,0)-(1,0)-(2,0)-(0,0)   [leg y=0, ring of 3]
+  |     |     |
+(0,1)-(1,1)-(2,1)-(0,1)   [leg y=1, ring of 3]
 ```
 
-Bond inventory (12 nearest-neighbor bonds total):
+Bond inventory (9 nearest-neighbor bonds total):
 
-- **Leg bonds** (within a row): `(x,y)-(x+1 mod 4, y)` for `x=0..3`, `y=0,1` → 4 bonds/leg × 2
-  legs = **8 leg bonds**.
-- **Rung bonds** (between rows): `(x,0)-(x,1)` for `x=0..3` → **4 rung bonds**.
+- **Leg bonds** (within a row): `(x,y)-(x+1 mod 3, y)` for `x=0..2`, `y=0,1` → 3 bonds/leg × 2
+  legs = **6 leg bonds**.
+- **Rung bonds** (between rows): `(x,0)-(x,1)` for `x=0..2` → **3 rung bonds**.
 
-With 2 spin species, that's `12 × 2 = 24` hopping terms, plus `8` on-site interaction terms
-(one per site) and half filling means `N_↑ = N_↓ = 4` fermions (`N = 8` total, `N = L`).
+With 2 spin species, that's `9 × 2 = 18` hopping terms, plus `6` on-site interaction terms
+(one per site) and half filling means `N_↑ = N_↓ = 3` fermions (`N = 6` total, `N = L`).
+
+Why 3×2 rather than a larger ladder: ED and Trotter alone would have been comfortable at 4×2
+(8 sites, 16 qubits) — it's Section D's VQE that forced the reduction. A Hamiltonian
+Variational Ansatz at 4×2, with COBYLA (matching TFIM's optimizer choice), did not converge in
+affordable time even at the easy `U=0` free-fermion check; a smaller, cheaper-per-circuit
+lattice made a more expressive ansatz (one free angle per bond) and multiple optimizer restarts
+affordable. See the notebook's Section D intro and `CLAUDE.md` for the full empirical account —
+not repeated here since this file is about the physics/mapping, not the optimizer. One
+structural consequence of the smaller ring *does* belong here: see §2.4.
 
 ### 1.3 Physical picture: crossover, not a sharp transition
 
@@ -95,7 +106,7 @@ would introduce one. Not pursued here.
 
 ### 2.1 Single-mode formulas (unchanged from the 1D case)
 
-Fix a linear ordering `1, …, M` of the `M = 2×8 = 16` fermionic modes (one per site-spin pair).
+Fix a linear ordering `1, …, M` of the `M = 2×6 = 12` fermionic modes (one per site-spin pair).
 For mode `j`:
 
 ```
@@ -125,51 +136,61 @@ stating plainly rather than glossing over.
 **Chosen ordering** (spin-blocked, then row-major within each block):
 
 ```
-↑ block (positions 0-7):  (0,0)↑ (1,0)↑ (2,0)↑ (3,0)↑ (0,1)↑ (1,1)↑ (2,1)↑ (3,1)↑
-↓ block (positions 8-15): (0,0)↓ (1,0)↓ (2,0)↓ (3,0)↓ (0,1)↓ (1,1)↓ (2,1)↓ (3,1)↓
+↑ block (positions 0-5):   (0,0)↑ (1,0)↑ (2,0)↑ (0,1)↑ (1,1)↑ (2,1)↑
+↓ block (positions 6-11):  (0,0)↓ (1,0)↓ (2,0)↓ (0,1)↓ (1,1)↓ (2,1)↓
 ```
 
 Spin-blocking keeps the on-site interaction term string-free algebraically (per §2.1, a product
 of two local number operators — see the 1D doc's §2.2(a) reasoning, unchanged by dimension),
-even though the two qubits involved (`i` in the `↑` block, `i` in the `↓` block) are 8 apart in
+even though the two qubits involved (`i` in the `↑` block, `i` in the `↓` block) are 6 apart in
 the register. Row-major ordering within each block is the simplest 2D flattening.
 
 ### 2.3 Bond-by-bond string cost, worked out for this lattice
 
-Per spin block (positions 0-7, pattern repeats identically for 8-15):
+Per spin block (positions 0-5, pattern repeats identically for 6-11):
 
 | Bond type | Example | Positions | String length |
 |---|---|---|---|
 | Leg, interior | `(0,y)-(1,y)`, `(1,y)-(2,y)` | adjacent | **0** |
-| Leg, wraparound | `(3,y)-(0,y)` | 3 apart (e.g. 3,0) | **2** |
-| Rung | `(x,0)-(x,1)` | 4 apart (e.g. 0,4) | **3** |
+| Leg, wraparound | `(2,y)-(0,y)` | 2 apart (e.g. 2,0) | **1** |
+| Rung | `(x,0)-(x,1)` | 3 apart (e.g. 0,3) | **2** |
 
-So per spin: 6 leg bonds are string-free, 2 leg bonds (the PBC wraparounds) need a length-2
-string, and all 4 rung bonds need a length-3 string. Doubled for both spins: **24 hopping
-terms**, of which 12 are string-free, 4 carry a 2-`Z` string, and 8 carry a 3-`Z` string. This
-is the concrete, unavoidable 2D overhead flagged in §2.2 — rung hopping gates cost more CNOTs
-than any 1D bond did.
+So per spin: 4 leg bonds are string-free, 2 leg bonds (the PBC wraparounds, one per row) need a
+length-1 string, and all 3 rung bonds need a length-2 string. Doubled for both spins: **18
+hopping terms**, of which 8 are string-free, 4 carry a 1-`Z` string, and 6 carry a 2-`Z` string.
+Shorter strings than the 4×2 case across the board (a direct consequence of the smaller ring),
+but still the same unavoidable 2D overhead flagged in §2.2 — no bond here is as cheap as every
+1D bond was.
 
 ### 2.4 Trotter layer structure
 
-Group terms into mutually-commuting layers (bonds sharing a qubit don't commute):
+Group terms into mutually-commuting layers (bonds sharing a qubit don't commute). This is where
+the smaller lattice costs something back: a 4-site ring is **bipartite** (its 4 edges 2-color
+into disjoint "even"/"odd" matchings), but a **3-site ring is not** — with only 3 vertices, any
+2 of its 3 edges share one, so no 2 of a row's leg bonds can ever share a layer. The best
+grouping is one layer per edge *position*: row `y=0`'s edge `k` and row `y=1`'s edge `k` touch
+entirely disjoint qubits (different rows), so those two share a layer; the 3 positions
+themselves cannot be merged further.
 
-- **Leg-even** (per spin): `{(0,y)-(1,y), (2,y)-(3,y)}` for both `y` — 4 disjoint bonds, 1 layer.
-- **Leg-odd** (per spin): `{(1,y)-(2,y), (3,y)-(0,y)}` for both `y` — 4 disjoint bonds, 1 layer.
-- **Rung** (per spin): all 4 rung bonds are mutually disjoint (distinct `x`) — 1 layer.
-- **Interaction**: all 8 on-site terms are diagonal → 1 layer.
+- **Leg layers** (per spin, 3 of them): `{(0,y)-(1,y) for y=0,1}`, `{(1,y)-(2,y) for y=0,1}`,
+  `{(2,y)-(0,y) for y=0,1}` — 2 disjoint bonds each, 1 layer each.
+- **Rung** (per spin): all 3 rung bonds are mutually disjoint (distinct `x`) — 1 layer.
+- **Interaction**: all 6 on-site terms are diagonal → 1 layer.
 
-That's **3 hopping sublayers per spin × 2 spins + 1 interaction layer = 7 non-commuting Trotter
-layers** total (vs. TFIM's 2, and better than the naive "up to 9" upper bound from not
-exploiting bond-disjointness). This is the layer count to implement in the Qiskit circuit.
+That's **4 hopping sublayers per spin × 2 spins + 1 interaction layer = 9 non-commuting Trotter
+layers** total — *more* than the 4×2 lattice's 7 (theory doc's earlier draft), the direct price
+of the 3-site ring's non-bipartiteness. Still far short of the naive "one layer per bond" upper
+bound (18+6=24) that ignoring all disjointness would give. This is the layer count implemented
+in the Qiskit circuit.
 
 ### 2.5 Qubit count and simulation cost
 
-`2 × 8 = 16` qubits → a `2^16 = 65536`-dimensional Hilbert space. This is meaningfully heavier
-than TFIM's `N=6` (`64`-dim): ED sparse diagonalization is still routine, but VQE (many circuit
-evaluations per optimizer step) and Trotter quench sweeps will be the dominant runtime cost —
-budget accordingly when picking shot counts / optimizer `maxiter` (mirrors the runtime caveats
-already in the TFIM README).
+`2 × 6 = 12` qubits → a `2^12 = 4096`-dimensional Hilbert space. Lighter than the original 4×2
+plan's `2^16 = 65536` (and the fixed-sector ED basis is smaller too: `C(6,3)^2 = 400` at half
+filling vs. `C(8,4)^2 = 4900`) — the direct payoff of the size reduction Section D's VQE forced.
+Still meaningfully heavier than TFIM's `N=6` (`64`-dim) for the *circuit* sections (Trotter
+quench sweeps, and especially VQE's many evaluations per optimizer step); budget shot counts /
+optimizer `maxiter` accordingly (mirrors the runtime caveats already in the TFIM README).
 
 ### 2.6 Other approaches (context only, not implemented)
 
@@ -178,7 +199,7 @@ already in the TFIM README).
 - **Fermionic SWAP networks** (Kivlichan et al.): the standard way to get linear-depth 2D
   fermionic simulation by dynamically re-sorting qubit-to-mode assignment with SWAP gates so
   every needed bond becomes momentarily adjacent. This is the "real" fix to §2.2's problem for
-  larger lattices; out of scope for an 8-site cluster but worth citing in the Limitations
+  larger lattices; out of scope for a 6-site cluster but worth citing in the Limitations
   section as the path to scaling this up.
 
 ## 3. What this feeds into
@@ -187,12 +208,16 @@ already in the TFIM README).
   fixed `(N_↑, N_↓)`, or the JW-mapped Pauli sum as a cross-check — both in plain numpy/scipy, no
   Qiskit). Sparse diagonalization (`scipy.sparse.linalg.eigsh`) gives `E₀(N_↑,N_↓)` for the
   sectors needed for `Δ_c` and, via the `S_tot=0` vs `S_tot=1` sectors, `Δ_s`.
-- **Trotter circuit**: the 7 layers of §2.4, each built as explicit `XX+YY` (hopping) or
+- **Trotter circuit**: the 9 layers of §2.4, each built as explicit `XX+YY` (hopping) or
   `ZZ`-type (interaction) rotations dressed with the string lengths from §2.3, assembled as a
   Qiskit `QuantumCircuit` from primitive gates (or `PauliEvolutionGate` used purely as a
   building block for a hand-specified Pauli term — not an auto-mapper). Executed via Qiskit Aer.
 - **VQE ansatz**: should conserve total particle number and, ideally, total spin — a
   hopping-gate/Givens-rotation-based ansatz built from the same JW mapping is preferred over a
   generic hardware-efficient ansatz, which would explore unphysical number/spin sectors unless
-  explicitly constrained. Execution (parameter binding, expectation values via Qiskit's
-  `Estimator`, classical optimizer loop) uses Qiskit; the ansatz structure itself is hand-designed.
+  explicitly constrained. Implemented as a Hamiltonian Variational Ansatz: the same hopping/
+  interaction gates as the Trotter circuit, with each angle promoted to a free parameter.
+  Energy expectation values are computed exactly via `qiskit.quantum_info.Statevector`
+  (`expectation_value`) rather than the `primitives.Estimator` wrapper — empirically much
+  cheaper per call at this circuit size, with an identical (exact, noiseless) result; the
+  classical optimizer loop (COBYLA, scipy) is unchanged in spirit from the plan.
