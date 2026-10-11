@@ -39,13 +39,21 @@ the TFIM study; `presentacion_fermi_hubbard.tex`/`.pdf` is a Beamer slide deck c
 Fermi-Hubbard problem statement and proposed solution (ED/Trotter/VQE plan at the originally
 planned 4×2 size — written before the 3×2 reduction, so it's now stale on lattice size; it's a
 companion to the theory doc's plan, not a report on finished results, and wasn't updated when
-the notebook changed size). Rebuild the slides with:
+the notebook changed size); `presentacion_fermi_hubbard_resultados.tex`/`.pdf` is its follow-up
+— same Beamer theme/palette, but covering the *results* now that the notebook is complete (one
+slide per section's actual figure/finding, the 4×2→3×2 change explained up front, Limitations
+summarized at the end). Numbers quoted in it are a snapshot from when it was written; if a
+notebook re-run changes them meaningfully, update the slide text, not just the embedded figures
+(the figures auto-update on rebuild since they're `\includegraphics`'d from the repo root, but
+numbers typed directly into the slide text do not). Rebuild either with:
 
 ```bash
-cd Informe_tecnico && pdflatex presentacion_fermi_hubbard.tex
+cd Informe_tecnico && pdflatex presentacion_fermi_hubbard.tex                    # or _resultados.tex
 ```
 
-Needs a LaTeX install with `beamer`, `tikz`, `booktabs`, and `braket`.
+Needs a LaTeX install with `beamer`, `tikz`, `booktabs`, and `braket`. `presentacion_fermi_hubbard_resultados.tex`
+also needs `graphicx` (for the embedded PNGs) and must be built from inside `Informe_tecnico/` —
+it references the root-level `fermi_hubbard_*.png` figures as `../fermi_hubbard_*.png`.
 
 ## Language and docs to keep in sync
 
