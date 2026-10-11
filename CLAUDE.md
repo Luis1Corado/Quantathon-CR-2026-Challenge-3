@@ -18,10 +18,10 @@ for the second:
 - **`FermiHubbard2D_ED_Trotter_VQE.ipynb`** — a second, newer study of the **2D Fermi-Hubbard
   model on a 4×2 ladder** (8 sites, 16 qubits after Jordan-Wigner), following the same
   ED-vs-Trotter-vs-VQE structure but with a different toolchain: **Qiskit** for circuit
-  primitives/simulation/VQE instead of guppylang/Selene. **Sections A (ED baseline) and B
-  (Trotterized evolution) are implemented** — Section C (Trotter error analysis), Section D
-  (VQE), and Limitations, all described in the theory doc below, are not yet written.
-  `requirements.txt` includes `qiskit`/`qiskit-aer`.
+  primitives/simulation/VQE instead of guppylang/Selene. **Sections A (ED baseline), B
+  (Trotterized evolution), and C (Trotter error analysis) are implemented** — Section D (VQE)
+  and Limitations, described in the theory doc below, are not yet written. `requirements.txt`
+  includes `qiskit`/`qiskit-aer`.
 - **`fermi_hubbard_theory.md`** — hand-derived theory for the Fermi-Hubbard notebook: lattice
   Hamiltonian, Jordan-Wigner mapping (with the per-bond Z-string costs specific to this 2D
   ladder), Trotter layer structure, and what each planned notebook section should build. Read
@@ -120,8 +120,9 @@ Running `TFIM_ED_Trotter_VQE_merged.ipynb` regenerates the figures in the repo r
 `tfim_phase_diagram.png`, `tfim_quench_h{0.5,1.0,2.0}_trotter_vs_exact.png`,
 `trotter_error_convergence.png`, `tfim_vqe_vs_ed_N6.png`.
 
-Running `FermiHubbard2D_ED_Trotter_VQE.ipynb` (Sections A–B) regenerates
-`fermi_hubbard_2d_phase_diagram.png` and `fermi_hubbard_quench_U{1.0,4.0,8.0}_trotter_vs_exact.png`.
+Running `FermiHubbard2D_ED_Trotter_VQE.ipynb` (Sections A–C) regenerates
+`fermi_hubbard_2d_phase_diagram.png`, `fermi_hubbard_quench_U{1.0,4.0,8.0}_trotter_vs_exact.png`,
+and `fermi_hubbard_trotter_error_convergence.png`.
 
 **Expected runtime is dominated by circuit simulation, not ED**, for the TFIM notebook. Section
 A (ED, N=6) runs in seconds. Sections B/C/D compile and run real circuits on Selene (2000
@@ -145,6 +146,11 @@ points up to `N_STEPS=50`), took ~15s per `U/t` value when last run — much fas
 Selene-based Section B, since Aer's statevector method has far less per-circuit overhead than
 compiling to and executing on Selene. For a quick smoke test, lower `N_SHOTS` or thin out
 `STEP_COUNTS`.
+
+Section C (`N_STEPS_SCAN = [5, 10, 20, 40, 80, 160]` at `U_FOR_ERROR_SCAN=4.0`, exact
+shot-free statevector evaluation) took ~40s when last run, dominated by the `n_steps=160`
+point (circuit depth scales with `n_steps`, and `Statevector.from_instruction` cost scales
+with that depth). For a quick smoke test, drop the largest `n_steps` values.
 
 There is **no test suite, linter, or CI** in this repo — the deliverables are the notebooks, the
 figures they emit, and the documents in `Informe_tecnico/`. "Verifying a change" means re-running
@@ -193,7 +199,7 @@ results are not guaranteed globally optimal (COBYLA is local).
 ### `FermiHubbard2D_ED_Trotter_VQE.ipynb` (in progress)
 
 Mirrors the TFIM notebook's section structure (see `fermi_hubbard_theory.md` §3 for the full
-plan); Sections A and B are implemented, C/D/Limitations are not:
+plan); Sections A, B, and C are implemented, D/Limitations are not:
 
 - **Section A — Exact diagonalization (classical baseline)**, implemented: `basis_states`
   (Fock basis for a fixed `(N_↑, N_↓)` particle-number sector), `build_fermi_hubbard_operators`
@@ -241,8 +247,32 @@ plan); Sections A and B are implemented, C/D/Limitations are not:
     crossover, not a new physical claim.
   - `PauliEvolutionGate` is opaque to Aer — every circuit is `.decompose(["PauliEvolution"])`'d
     before `sim.run(...)`, or the run raises `AerError: unknown instruction: PauliEvolution`.
-- **Section C — Trotter error analysis, not yet implemented**: same convergence-vs-Δt structure
-  as the TFIM notebook's Section C, adapted to this Hamiltonian.
+- **Section C — Trotter error analysis**, implemented: `trotter_convergence_scan` fixes
+  `U/t=4` (comparable hopping/interaction scales — the hardest case for the layers to not
+  commute, the same reasoning as TFIM's choice of its critical `h/J=1`) and sweeps
+  `N_STEPS_SCAN = [5, 10, 20, 40, 80, 160]`, measuring `|Trotter − exact|` double occupancy at
+  `t=T_MAX`.
+  - **Uses exact (shot-free) statevector evaluation, not Section B's shot-based measurement.**
+    `double_occupancy_from_statevector` reads the circuit's final `Statevector` directly — at
+    2000 shots, the statistical floor (~0.004–0.005) would mask the Trotter error exactly in the
+    `Δt` range this analysis needs to resolve. This is the deliberate reason Section C doesn't
+    reuse Section B's `run_circuit`/`double_occupancy_from_counts`.
+  - **Empirical result, reported as measured, not forced to a textbook slope.** The fitted
+    log-log slope in the asymptotic regime (`n_steps ≥ 40`) comes out close to **2**, steeper
+    than the `O(Δt)` *global* error naively expected for a first-order product formula (whose
+    `O(Δt²)` *local* error should generically accumulate to `O(Δt)`). The section's closing
+    markdown discusses this honestly as a plausible observable/state-specific cancellation of
+    the leading error term, without a closed-form proof — don't "fix" the fitted-slope labels in
+    this cell to match `O(Δt)` if re-running changes the numbers slightly; re-verify and update
+    the prose instead.
+  - **No second-order (symmetric Suzuki) scheme is implemented.** A prototype palindromic
+    6-outer-layers/1-middle-layer construction (generalizing TFIM's `X/2, ZZ, X/2` pattern to
+    this Hamiltonian's 7 layers) was tried and showed a consistently *larger* absolute error
+    than first order across the same `Δt` range — plausibly a large error-constant prefactor
+    rather than a wrong asymptotic order, but not resolved in the time available, so it was left
+    out rather than shipped unexplained. Picking this up again means budgeting time to either
+    find the construction's actual bug or characterize the crossover `Δt` properly, not just
+    reusing the prototype.
 - **Section D — VQE, not yet implemented**: planned ansatz should conserve particle number and
   ideally total spin (a hopping-gate/Givens-rotation ansatz built from the same JW mapping, per
   theory doc §3) rather than a generic hardware-efficient ansatz, which would explore unphysical
