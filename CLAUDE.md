@@ -19,10 +19,8 @@ self-contained notebooks**, both finished, plus a hand-derivation theory doc for
   ED-vs-Trotter-vs-VQE structure but with a different toolchain: **Qiskit** for circuit
   primitives/simulation/VQE instead of guppylang/Selene. **All sections are implemented**:
   A (ED baseline), B (Trotterized evolution), C (Trotter error analysis), D (VQE), and
-  Limitations. `requirements.txt` includes `qiskit`/`qiskit-aer`. **The 3×2 size was not the
-  original plan** — the lattice was originally 4×2 (8 sites, 16 qubits); it was reduced for the
-  *whole notebook* once Section D's VQE forced the issue (see the Notebook architecture section
-  below, and the notebook's own intro / Section D for the full empirical account). A structural
+  Limitations. **The 3×2 size was not the original plan** (originally 4×2, 16 qubits; reduced
+  for the whole notebook because of Section D's VQE — rationale under Notebook architecture). A structural
   consequence worth knowing up front: a 3-site ring (unlike 4×2's 4-site ring) is **not
   bipartite**, so Section B/C's Trotter circuit needs **9** mutually-commuting layers, not 7.
 - **`fermi_hubbard_theory.md`** — hand-derived theory for the Fermi-Hubbard notebook: lattice
@@ -50,6 +48,11 @@ numbers typed directly into the slide text do not). Rebuild either with:
 ```bash
 cd Informe_tecnico && pdflatex presentacion_fermi_hubbard.tex                    # or _resultados.tex
 ```
+
+Git-tracking caveat: `presentacion_fermi_hubbard.tex`/`.pdf` (the plan deck) is currently
+**untracked** — only the `_resultados` deck and the TFIM report PDF are committed. Don't assume
+the plan deck exists in other clones. (`Informe_tecnico/readme.md` and `individual_notebooks/readme.md`
+are empty placeholders.)
 
 Needs a LaTeX install with `beamer`, `tikz`, `booktabs`, and `braket`. `presentacion_fermi_hubbard_resultados.tex`
 also needs `graphicx` (for the embedded PNGs) and must be built from inside `Informe_tecnico/` —
@@ -136,9 +139,18 @@ jupyter notebook TFIM_ED_Trotter_VQE_merged.ipynb        # or FermiHubbard2D_ED_
 jupyter nbconvert --to notebook --execute --inplace TFIM_ED_Trotter_VQE_merged.ipynb
 ```
 
+With the venv that already exists in this checkout (no `quantathon_env` needed), the
+Fermi-Hubbard notebook runs end to end as:
+
+```bash
+venv/bin/jupyter nbconvert --to notebook --execute --inplace FermiHubbard2D_ED_Trotter_VQE.ipynb
+```
+
 Running `TFIM_ED_Trotter_VQE_merged.ipynb` regenerates the figures in the repo root:
 `tfim_phase_diagram.png`, `tfim_quench_h{0.5,1.0,2.0}_trotter_vs_exact.png`,
-`trotter_error_convergence.png`, `tfim_vqe_vs_ed_N6.png`.
+`trotter_error_convergence.png`, `tfim_vqe_vs_ed_N6.png`. These TFIM PNGs are **not committed
+and not present** in this checkout (only the `fermi_hubbard_*.png` figures are) — they exist
+only after a full TFIM run, which needs the Selene toolchain.
 
 Running `FermiHubbard2D_ED_Trotter_VQE.ipynb` (all sections) regenerates
 `fermi_hubbard_2d_phase_diagram.png`, `fermi_hubbard_quench_U{1.0,4.0,8.0}_trotter_vs_exact.png`,
