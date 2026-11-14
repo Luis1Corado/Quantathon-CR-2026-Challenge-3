@@ -89,6 +89,15 @@ diagnosable through ladder-specific observables:
   long-range 2D order, which a finite 2-leg ladder (quasi-1D, short-range correlated) does not
   have; reporting it would overstate what this cluster can show.
 
+**Finite-size caveat specific to the 3×2 cluster (found in the notebook's Section A).** The
+statements above are about large ladders. This 6-site cluster's single-particle spectrum,
+`{-3, -1, 0, 0, 2, 2}`, has a doubly degenerate level that is only half filled at half filling
+(an open shell). Its ground state is therefore a **spin triplet** for `U/t ≲ 4.3`, with
+`Δ_s = 0` and weakly ferromagnetic rungs, and `Δ_c(U=0) = 0`. The rung-singlet ground state
+with finite `Δ_s` described above appears only after a level crossing at `U/t ≈ 4.3`. The
+expectations listed for double occupancy, `Δ_s`, and rung correlations hold on this cluster
+only above that crossing.
+
 If a genuine finite-coupling transition is wanted later, the same 1D-doc caveats apply: an
 **ionic** (staggered on-site potential) or **extended** (nearest-neighbor `V`) Hubbard variant
 would introduce one. Not pursued here.

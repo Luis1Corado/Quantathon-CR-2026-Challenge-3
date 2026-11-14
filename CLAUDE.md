@@ -40,7 +40,10 @@ companion to the theory doc's plan, not a report on finished results, and wasn't
 the notebook changed size); `presentacion_fermi_hubbard_resultados.tex`/`.pdf` is its follow-up
 — same Beamer theme/palette, but covering the *results* now that the notebook is complete (one
 slide per section's actual figure/finding, the 4×2→3×2 change explained up front, Limitations
-summarized at the end). Numbers quoted in it are a snapshot from when it was written; if a
+summarized at the end); `presentacion_fermi_hubbard_charla.tex`/`.pdf` is a 10-slide,
+~10-minute talk version of the results (same theme, built to accompany a poster), organized
+around one question: how far the quantum methods get compared with exact diagonalization.
+Numbers quoted in the decks are a snapshot from when it was written; if a
 notebook re-run changes them meaningfully, update the slide text, not just the embedded figures
 (the figures auto-update on rebuild since they're `\includegraphics`'d from the repo root, but
 numbers typed directly into the slide text do not). Rebuild either with:
@@ -94,7 +97,12 @@ H = -t * Σ_{⟨i,j⟩,σ} (c†_{i,σ} c_{j,σ} + h.c.)  +  U * Σ_i n_{i,↑} 
 ladder, not a true extended 2D lattice — it is **gapped for any `U > 0`** (adiabatically
 connected to a rung-singlet Heisenberg ladder), so there is **no finite-`U_c` phase transition**
 at half filling; frame results as a **crossover**, diagnosed via double occupancy, charge gap
-`Δ_c`, spin gap `Δ_s`, and rung/leg spin correlations — not a sharp critical point. Qubit
+`Δ_c`, spin gap `Δ_s`, and rung/leg spin correlations — not a sharp critical point. **On
+this 6-site cluster, "gapped for any `U>0`" only holds for the charge gap**: the `U=0` open
+shell (single-particle levels `{-3,-1,0,0,2,2}`) makes the ground state a spin triplet with
+`Δ_s = 0` for `U/t ≲ 4.3`. A level crossing to the rung singlet happens at `U/t ≈ 4.3`, showing
+as a rung-correlation jump and a double-occupancy kink (theory doc §1.3 caveat, notebook
+"Reading the crossover plot"). Don't describe `Δ_s` as growing smoothly from `U=0`. Qubit
 ordering is spin-blocked then row-major (`↑` block = positions 0–5, `↓` block = 6–11); nearest-
 neighbor lattice bonds are not all JW-adjacent, so some hopping terms carry a Z-string (0, 1, or
 2 qubits long depending on bond type — see theory doc §2.3). The lattice size (`N=6`, not the

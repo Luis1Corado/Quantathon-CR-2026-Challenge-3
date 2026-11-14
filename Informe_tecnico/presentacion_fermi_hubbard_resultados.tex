@@ -148,21 +148,38 @@
 \end{frame}
 
 % =============================================================
-\begin{frame}{Leyendo el crossover}
+\begin{frame}{Leyendo el crossover: dos regimenes separados por un cruce de niveles}
+  \small
   \begin{itemize}
-    \item \textbf{Doble ocupacion:} decrece suavemente de $1/4$ ($U=0$, no correlacionado) a
-      $\sim$0.04 ($U/t=8$) -- la firma esperada de supresion de doble ocupacion.
-    \item \textbf{Brecha de carga $\Delta_c$:} crece monotonicamente de $0$ a $\sim$4.2 --
-      \good{positiva para todo $U>0$}, consistente con "gapeado siempre" (no hay $U_c$).
-    \item \textbf{Brecha de espin $\Delta_s$:} mucho mas pequena, crece suavemente hasta
-      $\sim$0.3 -- el diagnostico propio de la escalera (ausente en una cadena 1D).
-    \item \warn{Artefacto de tamano finito:} la correlacion de peldano tiene un \textbf{salto
-      discontinuo} cerca de $U/t\approx4.3$, mientras que $\Delta_c$, $\Delta_s$ y la doble
-      ocupacion se mantienen suaves ahi mismo -- firma de un cruce de niveles entre dos
-      estados casi degenerados con caracter de espin distinto, tipico de diagonalizacion
-      exacta en sistemas muy pequenos. \textbf{No} es un error de codigo; no se investigo
-      mas a fondo y se documenta como limitacion.
+    \item \textbf{Brecha de carga $\Delta_c$:} el diagnostico mas limpio -- vale $0$ en $U=0$
+      y crece monotonicamente hasta $\sim$4.2 en $U/t=8$ (tiende a escalar como $\sim U$).
+    \item \textbf{Doble ocupacion:} cae de $\approx1/4$ a $\sim$0.04, pero \warn{con un
+      quiebre} entre $U/t=4$ ($0.121$) y $U/t=5$ ($0.071$).
+    \item \warn{Cruce de niveles en $U/t\approx4.3$}, visible en todos los observables:
   \end{itemize}
+  \vspace{-0.3em}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{block}{$U/t\lesssim4.3$: estado base \emph{triplete} ($S=1$)}
+        $\Delta_s=0$ \textbf{exactamente}; correlacion de peldano debilmente
+        \emph{positiva} ($+0.01\to+0.05$).
+      \end{block}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{block}{$U/t\gtrsim4.3$: \emph{singlete de peldano}}
+        $\Delta_s$ se abre ($0.09$ en $U/t=5$, $0.30$ en $U/t=8$); peldano
+        antiferromagnetico ($\approx-0.15\to-0.18$).
+      \end{block}
+    \end{column}
+  \end{columns}
+  \vspace{0.4em}
+  \begin{alertblock}{Origen: capa abierta de tamano finito}
+    Espectro de una particula en $3\times2$: $\{-3,-1,0,0,2,2\}$. A llenado medio el nivel
+    degenerado $0$ queda \textbf{semi-lleno}, y los dos electrones alinean su espin (tipo
+    regla de Hund). Solo por encima de $U/t\approx4.3$ aparece la fisica de escalera
+    esperada. Se verifico con las energias de los sectores $S_z=0,1,2$; \textbf{no} es un error
+    de codigo.
+  \end{alertblock}
 \end{frame}
 
 \section{Seccion B -- Trotter (Qiskit)}
@@ -316,8 +333,9 @@
 \begin{frame}{Limitaciones honestas}
   \begin{itemize}
     \item \textbf{Tamano finito, crossover no transicion.} $N=6$, espacio de Hilbert
-      $2^{12}{=}4096$ -- gapeado para todo $U>0$; nada aqui extrapola al limite
-      termodinamico.
+      $2^{12}{=}4096$ -- brecha de carga para todo $U>0$, pero brecha de espin nula (estado
+      base triplete) hasta $U/t\approx4.3$ por la capa abierta del cluster; nada aqui
+      extrapola al limite termodinamico.
     \item \textbf{La red es un compromiso, no el plan original.} $3\times2$ en vez de
       $4\times2$, forzado por VQE -- con el costo estructural de 9 capas de Trotter, no 7.
     \item \textbf{Error de Trotter solo de primer orden}, verificado en un solo acoplamiento
@@ -340,7 +358,8 @@
       Trotter y VQE, con una seccion de Limitaciones honesta -- igual que TFIM.
     \item El cambio de red ($4\times2\to3\times2$) fue una decision \good{forzada
       empiricamente y documentada}, no una simplificacion silenciosa.
-    \item Los resultados muestran \good{fisica correcta y reconocible}: crossover suave,
+    \item Los resultados muestran \good{fisica correcta y reconocible}: crossover con brecha de carga creciente
+      (y un cruce triplete$\to$singlete de tamano finito en $U/t\approx4.3$),
       supresion de decaimiento de doblones a $U/t$ grande, convergencia de Trotter medible.
     \item El VQE funciona pero \warn{no converge completamente} -- se reporta la brecha real,
       no un resultado pulido para verse mejor de lo que es.
