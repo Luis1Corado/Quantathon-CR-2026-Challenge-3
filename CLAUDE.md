@@ -64,10 +64,7 @@ numbers typed directly into the slide text do not). Rebuild either with:
 cd Informe_tecnico && pdflatex presentacion_fermi_hubbard.tex                    # or _resultados.tex
 ```
 
-Git-tracking caveat: `presentacion_fermi_hubbard.tex`/`.pdf` (the plan deck) is currently
-**untracked** — only the `_resultados` deck and the TFIM report PDF are committed. Don't assume
-the plan deck exists in other clones. (`Informe_tecnico/readme.md` and `individual_notebooks/readme.md`
-are empty placeholders.)
+(`Informe_tecnico/readme.md` and `individual_notebooks/readme.md` are empty placeholders.)
 
 Needs a LaTeX install with `beamer`, `tikz`, `booktabs`, and `braket`. `presentacion_fermi_hubbard_resultados.tex`
 also needs `graphicx` (for the embedded PNGs) and must be built from inside `Informe_tecnico/` —
