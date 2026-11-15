@@ -43,7 +43,19 @@ slide per section's actual figure/finding, the 4×2→3×2 change explained up f
 summarized at the end); `presentacion_fermi_hubbard_charla.tex`/`.pdf` is a 10-slide,
 ~10-minute talk version of the results (same theme, built to accompany a poster), organized
 around one question: how far the quantum methods get compared with exact diagonalization.
-Numbers quoted in the decks are a snapshot from when it was written; if a
+`poster_fermi_hubbard.tex`/`.pdf` is the matching **A0 portrait poster** (`beamerposter`,
+same palette, same figures; the header names the author, Luis Corado, and the author's university ID (carné)).
+**The Fermi-Hubbard figures' text (titles, axes, legends) is in Spanish**, because they appear
+on the Spanish poster and decks. This is an exception to the "match the file's language" rule:
+the notebook's prose and code stay in English, but plot strings are Spanish.
+By the user's choice the poster is **figures and tables first, with one short message line per
+section**. Explanations belong in `guion_poster_fermi_hubbard.md`, the Spanish speaker script
+(timed sections, likely Q&A, backup numbers), not on the poster. Keep numbers in sync across the poster tables, the script, and
+the notebook.
+It is a single frame filled close to the page bottom, so adding text or enlarging the
+`scale=` option pushes the Conclusions row off the page *without* any LaTeX warning; check
+the rendered page after edits. The notebook saves figures at 300 dpi for print.
+Numbers quoted in the decks and poster are a snapshot from when it was written; if a
 notebook re-run changes them meaningfully, update the slide text, not just the embedded figures
 (the figures auto-update on rebuild since they're `\includegraphics`'d from the repo root, but
 numbers typed directly into the slide text do not). Rebuild either with:
