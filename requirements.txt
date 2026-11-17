@@ -9,3 +9,4 @@ qiskit-aer>=0.14.0
 jupyter>=1.1.1
 notebook>=7.6.1
 ipykernel>=7.3.0
+pylatexenc>=2.10

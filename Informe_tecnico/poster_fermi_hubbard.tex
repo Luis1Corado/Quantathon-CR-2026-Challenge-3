@@ -193,19 +193,20 @@
 \begin{columns}[T]
 \begin{column}{0.02\paperwidth}\end{column}
 
-\begin{column}{0.30\paperwidth}
-  \begin{block}{4 · Error de Trotter ($U/t=4$)}
+\begin{column}{0.47\paperwidth}
+  \begin{block}{4 · Circuito de un paso de Trotter (Qiskit)}
     \centering
-    \includegraphics[width=\linewidth]{../fermi_hubbard_trotter_error_convergence.png}
+    \includegraphics[width=\linewidth]{../fermi_hubbard_trotter_step_circuit.png}
 
-    \clave{Pendiente 1.96 (1.98 en $4\times2$): más rápido que $O(\Delta t)$.}
+    \clave{9 capas por paso · 148 CNOT (50 pasos $\approx$ 7400).
+      Altura de cada caja = cadena de Z de Jordan-Wigner.}
   \end{block}
 \end{column}
 
 \begin{column}{0.02\paperwidth}\end{column}
 
-\begin{column}{0.64\paperwidth}
-  \begin{block}{5 · VQE (ansatz Hamiltoniano-Variacional, 48 parámetros)}
+\begin{column}{0.47\paperwidth}
+  \begin{block}{5 · VQE (ansatz variacional HVA, 48 parámetros)}
     \centering
     \includegraphics[width=\linewidth]{../fermi_hubbard_vqe_vs_ed.png}
 
@@ -226,7 +227,7 @@
       \begin{column}{0.49\linewidth}
         \begin{itemize}
           \item \good{Trotter reproduce la dinámica exacta.}
-          \item \good{Su error es pequeño y medible} (pendiente $\approx2$).
+          \item \good{Circuito construido a mano} (Jordan-Wigner, 9 capas por paso).
         \end{itemize}
       \end{column}
       \begin{column}{0.49\linewidth}

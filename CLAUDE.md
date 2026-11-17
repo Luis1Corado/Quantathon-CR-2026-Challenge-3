@@ -52,7 +52,9 @@ By the user's choice the poster is **figures and tables first, with one short me
 section**. Explanations belong in `guion_poster_fermi_hubbard.md`, the Spanish speaker script
 (timed sections, likely Q&A, backup numbers), not on the poster. Keep numbers in sync across the poster tables, the script, and
 the notebook.
-It is a single frame filled close to the page bottom, so adding text or enlarging the
+`notas_estudio_fermi_hubbard.md` holds Spanish study notes in Q&A form (Jordan-Wigner, charge/spin
+gaps and how ED computes them, why 9 Trotter layers, singlet vs. triplet, 9 layers vs. 18 hop gates), with numbers matching
+the poster. The poster (`poster_fermi_hubbard.tex`) is a single frame filled close to the page bottom, so adding text or enlarging the
 `scale=` option pushes the Conclusions row off the page *without* any LaTeX warning; check
 the rendered page after edits. The notebook saves figures at 300 dpi for print.
 Numbers quoted in the decks and poster are a snapshot from when it was written; if a
@@ -171,7 +173,8 @@ only after a full TFIM run, which needs the Selene toolchain.
 
 Running `FermiHubbard2D_ED_Trotter_VQE.ipynb` (all sections) regenerates
 `fermi_hubbard_2d_phase_diagram.png`, `fermi_hubbard_quench_U{1.0,4.0,8.0}_trotter_vs_exact.png`,
-`fermi_hubbard_trotter_error_convergence.png`, and `fermi_hubbard_vqe_vs_ed.png`.
+`fermi_hubbard_trotter_error_convergence.png`, `fermi_hubbard_trotter_step_circuit.png`, and
+`fermi_hubbard_vqe_vs_ed.png`.
 
 **Expected runtime is dominated by circuit simulation, not ED**, for the TFIM notebook. Section
 A (ED, N=6) runs in seconds. Sections B/C/D compile and run real circuits on Selene (2000
@@ -325,6 +328,13 @@ longer a per-section lattice-size split; everything below reuses the same global
     counterpart to Section A's crossover, not a new physical claim. The leg-occupation plot's
     "balanced" reference line is `(N_UP_HALF+N_DOWN_HALF)/2`, computed dynamically, not
     hardcoded — if you change the filling, it still draws in the right place.
+  - **B.4b draws one Trotter step** (`trotter_step_diagram` → `fermi_hubbard_trotter_step_circuit.png`,
+    the poster's Section 4 figure, which replaced the Trotter-error plot there). It is a
+    drawing-only circuit with the same gates and order as `first_order_trotter_step`, but each
+    bond's commuting `XX_str`/`YY_str` pair is merged into one box and each gate is placed only
+    on its support qubits, so box height shows the JW Z-string. It also prints the real step's
+    CNOT count after transpiling to `{CX, RZ, SX, X}` (148 per step, ~7400 for 50 steps). The
+    `mpl` drawer needs `pylatexenc` (in `requirements.txt`).
   - `PauliEvolutionGate` is opaque to Aer — every circuit is `.decompose(["PauliEvolution"])`'d
     before `sim.run(...)`, or the run raises `AerError: unknown instruction: PauliEvolution`.
 - **Section C — Trotter error analysis**, implemented: `trotter_convergence_scan` fixes

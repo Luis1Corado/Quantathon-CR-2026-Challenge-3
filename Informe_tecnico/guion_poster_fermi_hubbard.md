@@ -133,25 +133,30 @@ tablas y una frase clave por sección; **todo lo que hay que explicar está aqu�
 
 ---
 
-## 4 · Error de Trotter (6:00 – 7:15)
+## 4 · El circuito de un paso de Trotter (6:00 – 7:15)
 
-👉 Gráfica log-log (los números de error no están en el póster: dílos tú).
+👉 El circuito, de izquierda a derecha. Los qubits 0↑–5↑ son los electrones con espín arriba y
+0↓–5↓ los de espín abajo.
 
-> "¿Qué tan bueno es el paso de Trotter? Para medirlo, fijamos *U/t* = 4, donde salto e
-> interacción son comparables y el error debería ser mayor, y variamos el número de pasos de 5
-> a 160. Aquí calculamos el resultado del circuito de forma exacta, sin shots, porque con 2000
-> shots el ruido estadístico taparía justo los errores pequeños que queremos ver."
+> "Así se ve **un paso de Trotter** en compuertas cuánticas, dibujado con Qiskit. Cada caja es
+> un salto de un electrón entre dos sitios vecinos, y las líneas rojas de la derecha son la
+> interacción *U*: una rotación Z↑Z↓ por sitio."
 
-> "El error baja de 0.026 a 0.00025. En escala logarítmica, la pendiente es **1.96**. Para un
-> método de Trotter de primer orden, lo esperado de libro es pendiente 1. Nos salió casi 2."
+> "Lo importante es la **altura de las cajas**. Por Jordan-Wigner, cada salto lleva una cadena
+> de Z sobre los qubits que quedan en medio. Los saltos de pierna (morado) tocan 2 qubits; los
+> que cierran el anillo (turquesa), 3; y los de peldaño (azul oscuro), 4. Ese costo extra
+> aparece por ser una red 2D: en una cadena 1D no existe."
 
-> "No lo forzamos al valor esperado: lo reportamos como lo medimos. Repetimos el análisis en la
-> red original de 4×2, con otro número de capas y otro espacio de Hilbert, y salió **1.98**. No
-> es casualidad de una red. Una explicación plausible es que el término de error principal se
-> cancela para este observable y este estado en particular. No tenemos una prueba cerrada."
+> "Los saltos que no comparten qubits van en paralelo. Por eso los de espín arriba y abajo
+> quedan uno al lado del otro. En total son **9 capas** por paso, y no 7 como en la red 4×2,
+> porque un anillo de 3 sitios no se puede colorear con 2 colores."
 
-- Probamos un esquema de segundo orden (Suzuki simétrico), pero daba un error *mayor* en este
-  rango de Δt. No lo resolvimos a tiempo y preferimos no incluirlo sin explicación.
+> "Al compilarlo a compuertas básicas, un paso tiene **148 CNOT**. Los 50 pasos de la
+> simulación suman unas **7400**. En un simulador ideal no es problema, pero en hardware actual,
+> con ruido, sí lo sería. Correrlo en hardware real es el siguiente paso."
+
+- Si preguntan por el error de Trotter: está en el notebook (Sección C). Con *U/t* = 4, el
+  error baja de 0.026 (5 pasos) a 0.00025 (160 pasos). Ver la pregunta sobre la pendiente 2.
 
 ---
 
@@ -188,8 +193,8 @@ tablas y una frase clave por sección; **todo lo que hay que explicar está aqu�
 
 1. > "**Trotter funciona.** Reproduce la dinámica exacta dentro del ruido de medición y captura
    > física real: la supresión del decaimiento de doblones."
-2. > "**Su error es pequeño y medible**, y converge más rápido de lo esperado, de forma
-   > reproducible en dos redes distintas."
+2. > "**El circuito lo construimos a mano**: Jordan-Wigner, 9 capas por paso y unos 148
+   > CNOT, sin un mapeo automático."
 3. > "**VQE es el cuello de botella.** Capta la tendencia, pero no la precisión, y su costo
    > decidió el tamaño de todo el proyecto."
 4. > "**A 6 sitios domina el tamaño finito.** Hasta *U/t* ≈ 4.3 el estado base es un triplete,
@@ -208,6 +213,54 @@ Una escalera de dos piernas es casi unidimensional. Para cualquier *U* > 0 tiene
 estado base se conecta suavemente con el de *U* pequeño. Para tener una transición real habría
 que cambiar el modelo, por ejemplo con un potencial alternado (Hubbard iónico) o una
 interacción entre vecinos *V* (Hubbard extendido).
+
+**¿Para qué sirve el término μ del Hamiltoniano?**
+Es el potencial químico. Lo fijamos en μ = *U*/2 para estar a llenado medio (3 electrones ↑
+y 3 ↓ en 6 sitios), que es la forma estándar del modelo en ese régimen. Como trabajamos
+siempre con el número de partículas fijo, μ·*N* es solo una constante: desplaza las energías,
+pero no cambia el estado base, la dinámica ni las brechas. Además simplifica el circuito: con
+μ = *U*/2, los términos de un qubit de la interacción se cancelan exactamente y en cada sitio
+queda una sola rotación Z↑Z↓.
+- *¿Y si lo quitan?* Los resultados serían los mismos (doble ocupación, correlaciones, Δ_c,
+  Δ_s). Solo cambia el valor absoluto de la energía, y ED y VQE usan el mismo *H*.
+- *¿Por qué no afecta Δ_c si ahí cambia N?* En Δ_c = E(N+1) + E(N−1) − 2E(N), el término μ se
+  cancela: μ(N+1) + μ(N−1) − 2μN = 0.
+- *¿La cancelación en el circuito es necesaria?* No es esencial. Sin ella, esos términos Z
+  suman algo proporcional a *N*, que se conserva, así que serían solo una fase global. Sirve
+  para ahorrar compuertas.
+
+**¿Qué significan la brecha de carga y la de espín?**
+"La brecha de carga dice cuánto cuesta mover un electrón; la de espín, cuánto cuesta voltear un
+espín. En un aislante de Mott la carga queda congelada (Δ_c grande), pero el espín puede seguir
+siendo barato. Por eso se miden por separado."
+
+**¿Cómo calcularon las brechas?**
+"Las calculamos con diagonalización exacta: buscamos la energía mínima en sectores con un
+electrón más o menos para la brecha de carga, y con un espín volteado para la de espín, y
+restamos. Cada sector tiene entre 225 y 400 estados, así que es instantáneo. Con VQE se podría
+hacer igual, pero su error en la energía sería mayor que las brechas mismas."
+
+**¿Cómo funciona el mapeo de Jordan-Wigner?**
+"Jordan-Wigner asigna un qubit a cada modo y reproduce el signo fermiónico con cadenas de Z. En
+2D algunos enlaces quedan lejos en el orden y pagan cadenas más largas; en nuestra escalera, las
+más largas son de dos qubits, en los peldaños."
+
+**¿Por qué son 9 capas por paso de Trotter?**
+"Dentro de una capa todos los saltos deben conmutar, es decir, no compartir sitios. Cada pierna
+es un anillo de 3 sitios, un triángulo, donde cualquier par de enlaces comparte un vértice: 3
+capas. Los peldaños caben en una. Eso da 4 por espín, 8 con los dos espines, más una de
+interacción: 9."
+
+**Si son 9 capas, ¿por qué el circuito tiene 18 cajas?**
+"Una capa es un grupo de compuertas que conmutan y se aplican juntas. Las 9 capas contienen 18
+saltos, uno por enlace y espín, más 6 interacciones, una por sitio."
+
+**¿Qué son el singlete y el triplete?**
+"Dos espines pueden sumar su espín, que es el triplete, o cancelarlo, que es el singlete. Con
+interacción débil, nuestra red tiene un nivel a medio llenar y los electrones se alinean, como en
+la regla de Hund: el estado base es un triplete. Con interacción fuerte prefieren espines
+opuestos con su vecino de peldaño y forman singletes. En *U/t* ≈ 4.3 se cruzan: ese es el salto
+que se ve en la gráfica."
 
 **¿Por qué 3×2 y no 4×2?**
 Por el VQE: a 16 qubits no convergía ni en *U* = 0 (−5.28 contra −12.00), y un optimizador
@@ -252,6 +305,7 @@ mucho más rápido a este tamaño: el notebook completo corre en menos de 10 min
 | Enlaces | 6 de pierna + 3 de peldaño = 9; 18 términos de salto (dos espines) |
 | Capas de Trotter | 9 (3×2) contra 7 (4×2) |
 | Parámetros del quench | *T* = 5, 50 pasos (Δt = 0.1), 2000 shots, *U/t* ∈ {1, 4, 8} |
+| Costo del circuito | 148 CNOT por paso (profundidad 104, compilado a {CX, RZ, SX, X}) → ~7400 CNOT en 50 pasos |
 | Error de Trotter (*U/t* = 4) | 0.026 (5 pasos) → 0.00025 (160 pasos); pendiente 1.96 (4×2: 1.98) |
 | VQE | 2 capas, 48 parámetros, COBYLA, 3 reinicios × 600 iteraciones, ~75 s por *U* |
 | Energía VQE vs. exacta | *U*=0: −7.03 / −8.00 · *U*=2: −10.21 / −11.59 · *U*=4: −14.33 / −15.79 · *U*=8: −25.32 / −26.31 |
